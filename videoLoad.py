@@ -17,7 +17,7 @@ from trainNetwork1 import load_weights1
 print cv2.__version__
 
 im_fun = Image()
-alphabet = [0,1,2,3,4,5,6,7,8,9]
+alphabet = [0,1,2,3,4,5,6,7,8,9] 
 # cap = cv2.VideoCapture("demo.avi")
 # print cap.isOpened()   # True = read video successfully. False - fail to read video.
 
