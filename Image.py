@@ -26,6 +26,10 @@ class Image:
             plt.imshow(image)
         else:
             plt.imshow(image, 'gray')
+
+        figManager = plt.get_current_fig_manager()
+        figManager.window.showMaximized()
+
         plt.show()
     def dilate(self,image):
         kernel = np.ones((2,2)) # strukturni element 3x3 blok
@@ -57,7 +61,7 @@ class Image:
         for contour in contours:
             x, y, w, h = cv2.boundingRect(contour)  # koordinate i velicina granicnog pravougaonika
             area = cv2.contourArea(contour)
-            if area > 60 and h < 100 and h > 15 and w > 5:
+            if area > 60 and h < 30 and h > 16 and w > 5: #if area > 60 and h < 100 and h > 15 and w > 5: ovo nije radilo u videu 3 pred kraj
                 # kopirati [y:y+h+1, x:x+w+1] sa binarne slike i smestiti u novu sliku
                 # oznaciti region pravougaonikom na originalnoj slici (image_orig) sa rectangle funkcijom
                 #region = image_bin[y:y + h + 1, x:x + w + 1]
@@ -68,7 +72,7 @@ class Image:
         sorted_regions = sorted_regions = [region[0] for region in regions_array]
 
         # sortirati sve regione po x osi (sa leva na desno) i smestiti u promenljivu sorted_regions
-        return image_orig, sorted_regions
+        return image_orig, sorted_regions, regions_array
 
 
     def matrix_to_vector(self,image):
