@@ -5,6 +5,7 @@ import matplotlib.cm as cm
 
 alphabet = [0,1,2,3,4,5,6,7,8,9]
 colors = cm.rainbow(np.linspace(0, 1, 10))
+
 class Image:
     def get_color(self,j):
         j = j %10
@@ -65,7 +66,7 @@ class Image:
         for contour in contours:
             x, y, w, h = cv2.boundingRect(contour)  # koordinate i velicina granicnog pravougaonika
             area = cv2.contourArea(contour)
-            if area > 60 and h < 30 and h > 17 and w > 8: #if area > 60 and h < 100 and h > 15 and w > 5: ovo nije radilo u videu 3 pred kraj
+            if area > 60 and h < 30 and h > 18 and w > 8: #if area > 60 and h < 100 and h > 15 and w > 5: ovo nije radilo u videu 3 pred kraj
                 # kopirati [y:y+h+1, x:x+w+1] sa binarne slike i smestiti u novu sliku
                 # oznaciti region pravougaonikom na originalnoj slici (image_orig) sa rectangle funkcijom
                 #region = image_bin[y:y + h + 1, x:x + w + 1]
@@ -108,3 +109,4 @@ class Image:
         for output in outputs:
             result.append(alphabet[self.winner(output)])
         return result
+    

@@ -16,20 +16,55 @@ from Image import Image
 from trainNetwork import load_weights
 from trainNetwork1 import load_weights1
 
+
 def ccw(A,B,C):
     return (C[1]-A[1])*(B[0]-A[0]) > (B[1]-A[1])*(C[0]-A[0])
 def intersect(A,B,C,D):
         return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
 
+def check_number_line_intersecion(fount_number_everything,suma):
+
+    A_n = [fount_number_everything[3][-1][0] , fount_number_everything[3][-1][1] ]
+
+    B_n = [fount_number_everything[3][-2][0] , fount_number_everything[3][-2][1] ]
+    if( len(fount_number_everything[3]) >=4 ):
+        B1_n = [fount_number_everything[3][-4][0] , fount_number_everything[3][-4][1] ]
+    else :
+        B1_n = [fount_number_everything[3][0][0] , fount_number_everything[3][0][1] ]
+
+    # PROVERAVAM ZELENU
+    if( not fount_number_everything[4]):
+        C_l = [line_g[0] , line_g[1]]
+        D_l = [line_g[2] , line_g[3]]
+
+        if( intersect(A_n,B_n,C_l,D_l) or intersect(A_n,B1_n,C_l,D_l) ):
+            fount_number_everything[4] = True;
+            suma -= fount_number_everything[3][-1][2]
+            print 'Oduzeo sam %d(%d,%d)   SUMA :%d'%(fount_number_everything[3][-1][2],fount_number_everything[3][-1][0],fount_number_everything[3][-1][1],suma)
+    # PROVERAVAM ZA PLAVU
+    if( not fount_number_everything[5]):
+        C_l = [line_b[0] , line_b[1]]
+        D_l = [line_b[2] , line_b[3]]
+
+        if( intersect(A_n,B_n,C_l,D_l) or intersect(A_n,B1_n,C_l,D_l) ):
+            fount_number_everything[5] = True;
+            suma += fount_number_everything[3][-1][2]
+            print 'Sabrao sam %d(%d,%d)   SUMA :%d'%(fount_number_everything[3][-1][2],fount_number_everything[3][-1][0],fount_number_everything[3][-1][1],suma)
+    return suma
+
+
+
 
 im_fun = Image()
 alphabet = [0,1,2,3,4,5,6,7,8,9]
-SUM = 0;
 # cap = cv2.VideoCapture("demo.avi")
 # print cap.isOpened()   # True = read video successfully. False - fail to read video.
+SUM = 0;
 redni_br = 0
 ID_variable = 0
-cap = cv2.VideoCapture('Videos/video-7.avi') # u 3 ne readi pred kraj
+tresh = 0.65
+frames_skipped = 16;
+cap = cv2.VideoCapture('Videos/video-9.avi') # u 3 ne readi pred kraj
 ret, img = cap.read()
 img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
 
@@ -44,11 +79,11 @@ ret, img_b_bin = cv2.threshold(img_b, 0, 255, cv2.THRESH_OTSU)
 # plt.imshow(img_b_bin,'gray')
 # plt.show()
 
-lines = cv2.HoughLinesP(img_g_bin,rho = 1,theta = 1*np.pi/180,threshold = 100,minLineLength = 200,maxLineGap = 20)
+lines = cv2.HoughLinesP(img_g_bin,rho = 1,theta = 1*np.pi/180,threshold = 100,minLineLength = 200,maxLineGap = 10)
 for x1,y1,x2,y2 in lines[0]:
     cv2.line(img,(x1,y1),(x2,y2),(255,0,0),2)
 
-lines1 = cv2.HoughLinesP(img_b_bin,rho = 1,theta = 1*np.pi/180,threshold = 100,minLineLength = 200,maxLineGap = 20)
+lines1 = cv2.HoughLinesP(img_b_bin,rho = 1,theta = 1*np.pi/180,threshold = 100,minLineLength = 200,maxLineGap = 10)
 for x1,y1,x2,y2 in lines1[0]:
     cv2.line(img,(x1,y1),(x2,y2),(255,255,255),2)
 
@@ -72,16 +107,10 @@ model = load_weights1('weights1_1');
 # found_numbers_everything      ovde cu suvati LISTU  [ ( ID, sliku,   [ (u kolko iteracija se nije pojavila, (X,Y) koordinatu poslednje pojave, predikciju )]    )]
 found_numbers_everything = [];
 i=0
-
-# za testiranje promenljive
-first_img = 0;
-last_fount = [[0,0],[0,0],[0,0]]
-not_foun_iterations = [0, 0 ,0 ]
-
 while(ret):
     ret, frame = cap.read()
     i += 1
-    if i % 20 != 1 :
+    if i % frames_skipped != 1 :
         continue
     if( not ret):
         break
@@ -107,7 +136,6 @@ while(ret):
     selected_test, number_imgs, number_imgs_with_coord = im_fun.select_roi(img.copy(),frame_bin)
     # plt.imshow(frame_bin,'gray')
     # plt.show();
-
 
     # SADA TREBA UBACITI PRONADJENE REGIONE U NEURONSKU
 
@@ -146,68 +174,100 @@ while(ret):
         j=0;
         number_imgs_with_coord_without_found = number_imgs_with_coord
         for fount_number_everything in found_numbers_everything:
-            w, h = fount_number_everything[1].shape[::-1]
-            # print '%d'% (fount_number_everything[0])
-            # print fount_number_everything[2][0][2]
-            # print '\n'
-            res = cv2.matchTemplate(frame_bin_before_erode, fount_number_everything[1] ,cv2.TM_CCOEFF_NORMED )
-            threshold = 0.59  # sto je veci broj to je slabiji uslov (0.65 je radio posao dobro valjda)
-            loc = np.where( res >= threshold)
-            found = False;
-            for pt in zip(*loc[::-1]):
-                if(     ( pt[0] <= fount_number_everything[3][-1][0] - 5 + (fount_number_everything[2] * 2*12 ) )
-                or ( pt[1] <= fount_number_everything[3][-1][1] - 5 + (fount_number_everything[2] * 2*12) )
-                or  ( pt[0] > fount_number_everything[3][-1][0] + 30 + (fount_number_everything[2] * 2*20 )  )
-                or ( pt[1] > fount_number_everything[3][-1][1] + 30 + (fount_number_everything[2] *2*20 ) )       ):
-                    continue;
-                last_prediction = fount_number_everything[3][-1][2];
-                fount_number_everything[3].append( (pt[0],pt[1],last_prediction) )
-                cv2.rectangle(selected_test, pt, (pt[0] + w, pt[1] + h), im_fun.get_color( fount_number_everything[0] )*255, 2)
-                found = True;
 
-                # SADA TREBA DA PRODJEM KROZ SVE KONTURE KOJE SAM NASAO U OVOM FREJMU I DA IZBACIM ONU KOJA JE VEC PRONADJENA
-                x1 = pt[0] # gornja x kordinata trenutno pronadjenog broja
-                y1 = pt[1] # gornja y kordinata trenutno pronadjenog broja
-                x2 = pt[0] + 15; # donja x kordinata trenutno pronadjenog broja
-                y2 = pt[1] + 15; # donja y kordinata trenutno pronadjenog broja
-                number_imgs_with_coord_without_found_empy=[]
+            found = False;
+            # SADA ONE BROJEVE STO SAM NASAO U PRVOM FREJMU ILI DODAO U NEKIM DRUGIMA PRATIM SA MACHTAMPLATE TAKO STO IH POKUSAVAM NACI NA SLICI
+            # >>>>>>>>>>>>>>>>>>>>> PRVI NACIN PRONALASKA BROJA KOJEG VEC PRATIM ( fount_number_everything )NA NOVOM FREJMU
+            if( not found  ):
+                w, h = fount_number_everything[1].shape[::-1]
+                res = cv2.matchTemplate(frame_bin_before_erode, fount_number_everything[1] ,cv2.TM_CCOEFF_NORMED )
+                threshold = tresh  # sto je veci broj to je slabiji uslov (0.65 je radio posao dobro valjda)
+                loc = np.where( res >= threshold)
+
+                for pt in zip(*loc[::-1]):
+                    if( ( pt[0] <= fount_number_everything[3][-1][0] - 10 + (fount_number_everything[2] * 2*(frames_skipped - 8)  ) )
+                    or  ( pt[1] <= fount_number_everything[3][-1][1] - 10 + (fount_number_everything[2] * 2*(frames_skipped - 8) ) )
+                    or  ( pt[0] > fount_number_everything[3][-1][0] + 30 + (fount_number_everything[2] * 2*frames_skipped )  )
+                    or  ( pt[1] > fount_number_everything[3][-1][1] + 30 + (fount_number_everything[2] *2*frames_skipped ) )       ):
+                        continue;
+                    # KADA DODJEM OVDE TO ZNACI DA SAM NASAO ZADOVOLJAVAUCI BROJ I IZACU IZ OVOG FORA
+                    last_prediction = fount_number_everything[3][-1][2];
+                    fount_number_everything[3].append( (pt[0],pt[1],last_prediction) )
+                    cv2.rectangle(selected_test, pt, (pt[0] + w, pt[1] + h), im_fun.get_color( fount_number_everything[0] )*255, 2)
+                    found = True;
+
+                    # SADA TREBA DA PRODJEM KROZ SVE KONTURE KOJE SAM NASAO U OVOM FREJMU I DA IZBACIM ONU KOJA SAM SAD PRONASAO
+                    x1 = pt[0] # gornja x kordinata trenutno pronadjenog broja
+                    y1 = pt[1] # gornja y kordinata trenutno pronadjenog broja
+                    x2 = pt[0] + 15; # donja x kordinata trenutno pronadjenog broja
+                    y2 = pt[1] + 15; # donja y kordinata trenutno pronadjenog broja
+                    number_imgs_with_coord_without_found_empy=[]
+                    for img_with_cord in number_imgs_with_coord_without_found:
+                        x = img_with_cord[1][0]
+                        y = img_with_cord[1][1]
+                        if not ( x2 > x > x1 and x2 > x > x1):
+                            number_imgs_with_coord_without_found_empy.append(img_with_cord)
+                    number_imgs_with_coord_without_found = number_imgs_with_coord_without_found_empy
+                    break;
+
+            # AKO MACH TAMPLATE NIJE NASAO BROJ PROBACU JA DA GA NADJEM NEGDE U OKOLINI ONIH KOJE SAM PREPOZNAO SA FINDCONTURES
+            # >>>>>>>>>>>>>>>>>>>>> DRUGI NACIN PRONALASKA BROJA KOJEG VEC PRATIM ( fount_number_everything )NA NOVOM FREJMU
+            if( not found  ):
+                which_img_with_coord_to_remove_in_found = 0;
+                x_of_current_tracked_number = fount_number_everything[3][-1][0];
+                y_of_current_tracked_number = fount_number_everything[3][-1][1];
+                prediction_of_current_tracked_number = fount_number_everything[3][-1][2];
+                frames_not_found_for_current_tracked_number = fount_number_everything[2];
+                index_of_conture = 0;
+                # SADA PRODJEM KROZ SVAKU KONTURU ZA KOJU VEC NISAM NASAO BROJ KOJI JE OD PRE BIO DODAT
                 for img_with_cord in number_imgs_with_coord_without_found:
-                    x = img_with_cord[1][0]
-                    y = img_with_cord[1][1]
-                    if not ( x2 > x > x1 and x2 > x > x1):
-                        number_imgs_with_coord_without_found_empy.append(img_with_cord)
-                number_imgs_with_coord_without_found = number_imgs_with_coord_without_found_empy
-                break;
+                    x_of_conture = img_with_cord[1][0];
+                    y_of_conture = img_with_cord[1][1];
+                    w_of_conture = img_with_cord[1][2];
+                    h_of_conture = img_with_cord[1][3];
+                    if( ( x_of_conture <= x_of_current_tracked_number - 10 + (frames_not_found_for_current_tracked_number * 2 * (frames_skipped - 8) ) )
+                    or  ( y_of_conture <= y_of_current_tracked_number - 10 + (frames_not_found_for_current_tracked_number * 2 * (frames_skipped - 8) ) )
+                    or  ( x_of_conture > x_of_current_tracked_number + 30 + (frames_not_found_for_current_tracked_number * 2 *  frames_skipped )  )
+                    or  ( y_of_conture > y_of_current_tracked_number + 30 + (frames_not_found_for_current_tracked_number * 2 *  frames_skipped )  )       ):
+                        index_of_conture += 1;
+                        continue;
+                    # AKO SAM USAO OVDE TO ZNACI TRENUTNA KONTURA IZ FOR-A ZADOVOLJAVA USLOV DA BUDE MOJ VEC DODATI BROJ KOJI TRAZIM
+
+                    # PROVERICU PRVO DA LI JE MREZA REKLA DA SU TO ISTI BORJEVI
+                    if( prediction_of_current_tracked_number != img_with_cord[2] ):
+                        index_of_conture += 1;
+                        continue;
+                    # AKO JE MREZA REKLA DA SU ISTI ONDA I URADIM POREDJENJE KOKRETNIH KONTURA DA VIDIM KOLKO SE SLAZI
+                    # PA AKO SE SLAZU I SLIKE ONDA JE TO TAJ BROJ
+
+                    # >>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<,
+
+                    # ALI ZA SAD CU RECI DA JE TO TO
+                    fount_number_everything[3].append( (x_of_conture,y_of_conture,prediction_of_current_tracked_number) )
+                    cv2.rectangle(selected_test, (x_of_conture,y_of_conture), (x_of_conture + w + 4, y_of_conture + h +5), im_fun.get_color( fount_number_everything[0] )*255, 2)
+                    found = True;
+                    # SADA TREBA DA TU KONTURU KOJU SAM POVEZAO SA VEC PRACENIM BROJEM IZBACIM IZ LISTE KONTURA.
+                    which_img_with_coord_to_remove_in_found = img_with_cord
+                    # IZLAZIM IZ OVOG FORA ZATO STO SAM NASAO TRENUTKU KONTURU
+                    break;
+
+                if ( found ):
+                    del number_imgs_with_coord_without_found[index_of_conture]
+
+            # OVAJ DEO VAZI ZA OBA NACINA TRAZENJA
             if found:
                 fount_number_everything[2] = 0;
-                # ovde cu gledati da li je broj bio nestao i ako jeste kuda je onda prosao
-
-                # PROVERAVAM ZA ZELENU
-                if( not fount_number_everything[4]):
-                    A_n = [fount_number_everything[3][-1][0] , fount_number_everything[3][-1][1] ]
-                    B_n = [fount_number_everything[3][-2][0] , fount_number_everything[3][-2][1] ]
-                    C_l = [line_g[0] , line_g[1]]
-                    D_l = [line_g[2] , line_g[3]]
-
-                    if( intersect(A_n,B_n,C_l,D_l)):
-                        fount_number_everything[4] = True;
-                        SUM -= fount_number_everything[3][-1][2]
-                        print 'Oduzeo sam %d   SUMA :%d'%(fount_number_everything[3][-1][2],SUM)
-                # PROVERAVAM ZA PLAVU
-                if( not fount_number_everything[5]):
-                    A_n = [fount_number_everything[3][-1][0] , fount_number_everything[3][-1][1] ]
-                    B_n = [fount_number_everything[3][-2][0] , fount_number_everything[3][-2][1] ]
-                    C_l = [line_b[0] , line_b[1]]
-                    D_l = [line_b[2] , line_b[3]]
-
-                    if( intersect(A_n,B_n,C_l,D_l)):
-                        fount_number_everything[5] = True;
-                        SUM += fount_number_everything[3][-1][2]
-                        print 'Sabrao sam %d   SUMA :%d'%(fount_number_everything[3][-1][2],SUM)
+                # PROVERAVAM DA LI JE I SABRAN I ODUZET
+                if( fount_number_everything[4] and fount_number_everything[5] ):
+                    continue;
+                # PROVERAVAM SECENJE SA LINIJOM
+                SUM = check_number_line_intersecion(fount_number_everything,SUM)
             else:
                 fount_number_everything[2] += 1;
                 # print '%d not fount iterations %d NUMBER: %d'% (fount_number_everything[0] ,fount_number_everything[2],fount_number_everything[3][-1][2])
             j +=1
+        # PRE NEGO STO ONE KOJE NISAM IZBACIO UBACIM KAO NOVE POGLEDACU DA LI SE ONI NALAZE MOZDA TU NEGDE U OKOLINI SAMO IH NISAM PREPOZNAO
+
         # SADA ONE KOJE NISAM IZBACIO TREBA DA UBACIM U LISTU KAO NOVE
         k = 0;
         for  number_imgs_with_coord in number_imgs_with_coord_without_found:
@@ -219,7 +279,7 @@ while(ret):
         print '\n'
 
     # ISCRTAVANJE FREJMA SA OZNACENIM BROJEVIMA
-    im_fun.display_image(selected_test)
+    #im_fun.display_image(selected_test)
 
 cap.release()
 
