@@ -1,0 +1,5 @@
+out1_2		14 preskoci a border je 15
+out1_3		svaki 16 frame i 15 border
+out1_4		16 frejmova i 20 border
+out1_5		frejm svaki 15 border 10
+out1_6		svaki 16 frame i 5 border

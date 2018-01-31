@@ -64,6 +64,7 @@ redni_br = 0
 ID_variable = 0
 tresh = 0.65
 frames_skipped = 16;
+print_frame = False
 cap = cv2.VideoCapture('Videos/video-9.avi') # u 3 ne readi pred kraj
 ret, img = cap.read()
 img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
@@ -109,6 +110,11 @@ found_numbers_everything = [];
 i=0
 while(ret):
     ret, frame = cap.read()
+    plt.imshow(frame)
+    plt.figure()
+    frame = im_fun.addBorder(frame)
+    plt.imshow(frame)
+    plt.show()
     i += 1
     if i % frames_skipped != 1 :
         continue
@@ -122,17 +128,22 @@ while(ret):
     #im_fun.display_image(img_r)
 
     frame_bin = im_fun.invert(im_fun.image_bin(im_fun.image_gray(img)))
+    # plt.imshow(frame_bin,'gray')
+    # plt.show()
+
     #test_bin = im_fun.invert(im_fun.image_bin(img_r))
 
     # DA LI RADITI sa diletacijom i erozijom? videti kako se prepoznavanje ponasa
     # test_bin_e_d = im_fun.erode(im_fun.dilate(test_bin))
 
-    # uradi eroziju binarne slike frejma da vidis hoce li bolje prepoznati
-    frame_bin_before_erode = frame_bin
+    # za mach tempalte mu treba gray pa nabolje uradit sa otsu
+    frame_bin_otsu = im_fun.invert(im_fun.image_bin_otsu(im_fun.image_gray(img)))
 
     # plt.imshow(frame_bin,'gray')
     # plt.figure()
     frame_bin = im_fun.erode(frame_bin);
+    # plt.imshow(frame_bin,'gray')
+    # plt.show()
     selected_test, number_imgs, number_imgs_with_coord = im_fun.select_roi(img.copy(),frame_bin)
     # plt.imshow(frame_bin,'gray')
     # plt.show();
@@ -180,7 +191,7 @@ while(ret):
             # >>>>>>>>>>>>>>>>>>>>> PRVI NACIN PRONALASKA BROJA KOJEG VEC PRATIM ( fount_number_everything )NA NOVOM FREJMU
             if( not found  ):
                 w, h = fount_number_everything[1].shape[::-1]
-                res = cv2.matchTemplate(frame_bin_before_erode, fount_number_everything[1] ,cv2.TM_CCOEFF_NORMED )
+                res = cv2.matchTemplate(frame_bin_otsu, fount_number_everything[1] ,cv2.TM_CCOEFF_NORMED )
                 threshold = tresh  # sto je veci broj to je slabiji uslov (0.65 je radio posao dobro valjda)
                 loc = np.where( res >= threshold)
 
@@ -279,7 +290,8 @@ while(ret):
         print '\n'
 
     # ISCRTAVANJE FREJMA SA OZNACENIM BROJEVIMA
-    #im_fun.display_image(selected_test)
+    if(print_frame):
+        im_fun.display_image(selected_test)
 
 cap.release()
 

@@ -7,6 +7,11 @@ alphabet = [0,1,2,3,4,5,6,7,8,9]
 colors = cm.rainbow(np.linspace(0, 1, 10))
 
 class Image:
+    def addBorder(self,img):
+        color = [0, 0, 0]
+        top, bottom, left, right = [5]*4
+        return cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
+
     def get_color(self,j):
         j = j %10
         return colors[j]
@@ -19,7 +24,13 @@ class Image:
     def image_bin(self,image_gs):
         height, width = image_gs.shape[0:2]
         image_binary = np.ndarray((height, width), dtype=np.uint8)
-        #ret,image_bin = cv2.threshold(image_gs, 127, 255, cv2.THRESH_OTSU)
+        #ret,image_bin = cv2.threshold(image_gs, 200, 255, cv2.THRESH_BINARY)
+        ret,image_bin = cv2.threshold(image_gs, 0, 255, cv2.THRESH_OTSU)
+        return image_bin
+    def image_bin_otsu(self,image_gs):
+        height, width = image_gs.shape[0:2]
+        image_binary = np.ndarray((height, width), dtype=np.uint8)
+        #ret,image_bin = cv2.threshold(image_gs, 200, 255, cv2.THRESH_BINARY)
         ret,image_bin = cv2.threshold(image_gs, 0, 255, cv2.THRESH_OTSU)
         return image_bin
 
@@ -109,4 +120,3 @@ class Image:
         for output in outputs:
             result.append(alphabet[self.winner(output)])
         return result
-    

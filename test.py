@@ -18,7 +18,7 @@ with open('res.txt') as file:
 correct = 0
 student = []
 student_results = []
-with open("out1.txt") as file:
+with open("out1_6.txt") as file:
     data = file.read()
     lines = data.split('\n')
     for id, line in enumerate(lines):
