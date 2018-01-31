@@ -1,10 +1,14 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 alphabet = [0,1,2,3,4,5,6,7,8,9]
-
+colors = cm.rainbow(np.linspace(0, 1, 10))
 class Image:
+    def get_color(self,j):
+        j = j %10
+        return colors[j]
     def load_image(self, path):
         return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
 
@@ -61,7 +65,7 @@ class Image:
         for contour in contours:
             x, y, w, h = cv2.boundingRect(contour)  # koordinate i velicina granicnog pravougaonika
             area = cv2.contourArea(contour)
-            if area > 60 and h < 30 and h > 16 and w > 5: #if area > 60 and h < 100 and h > 15 and w > 5: ovo nije radilo u videu 3 pred kraj
+            if area > 60 and h < 30 and h > 17 and w > 8: #if area > 60 and h < 100 and h > 15 and w > 5: ovo nije radilo u videu 3 pred kraj
                 # kopirati [y:y+h+1, x:x+w+1] sa binarne slike i smestiti u novu sliku
                 # oznaciti region pravougaonikom na originalnoj slici (image_orig) sa rectangle funkcijom
                 #region = image_bin[y:y + h + 1, x:x + w + 1]
