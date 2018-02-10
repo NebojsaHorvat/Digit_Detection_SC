@@ -56,7 +56,7 @@ im_fun = Image()
 alphabet = [0,1,2,3,4,5,6,7,8,9]
 # cap = cv2.VideoCapture("demo.avi")
 # print cap.isOpened()   # True = read video successfully. False - fail to read video.
-f = open('out1_6.txt', 'w')
+f = open('out_final', 'w')
 f.write('RA 77/2014 Nebojsa Horvat\n')
 f.write('file	sum\n')
 videos = ['video-0.avi','video-1.avi','video-2.avi','video-3.avi','video-4.avi','video-5.avi','video-6.avi','video-7.avi','video-8.avi','video-9.avi',]

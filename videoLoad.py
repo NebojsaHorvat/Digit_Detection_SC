@@ -64,7 +64,7 @@ redni_br = 0
 ID_variable = 0
 tresh = 0.65
 frames_skipped = 16;
-print_frame = False
+print_frame = True
 cap = cv2.VideoCapture('Videos/video-9.avi') # u 3 ne readi pred kraj
 ret, img = cap.read()
 img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
@@ -110,16 +110,12 @@ found_numbers_everything = [];
 i=0
 while(ret):
     ret, frame = cap.read()
-    plt.imshow(frame)
-    plt.figure()
-    frame = im_fun.addBorder(frame)
-    plt.imshow(frame)
-    plt.show()
     i += 1
     if i % frames_skipped != 1 :
         continue
     if( not ret):
         break
+    frame = im_fun.addBorder(frame)
     img = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
 
     # POKUSAJ DA GLEDAM SAMO CRVENU BOJU
@@ -137,7 +133,8 @@ while(ret):
     # test_bin_e_d = im_fun.erode(im_fun.dilate(test_bin))
 
     # za mach tempalte mu treba gray pa nabolje uradit sa otsu
-    frame_bin_otsu = im_fun.invert(im_fun.image_bin_otsu(im_fun.image_gray(img)))
+    frame_bin_before_erode = frame_bin
+    #frame_bin_otsu = im_fun.invert(im_fun.image_bin_otsu(im_fun.image_gray(img)))
 
     # plt.imshow(frame_bin,'gray')
     # plt.figure()
@@ -191,7 +188,7 @@ while(ret):
             # >>>>>>>>>>>>>>>>>>>>> PRVI NACIN PRONALASKA BROJA KOJEG VEC PRATIM ( fount_number_everything )NA NOVOM FREJMU
             if( not found  ):
                 w, h = fount_number_everything[1].shape[::-1]
-                res = cv2.matchTemplate(frame_bin_otsu, fount_number_everything[1] ,cv2.TM_CCOEFF_NORMED )
+                res = cv2.matchTemplate(frame_bin_before_erode, fount_number_everything[1] ,cv2.TM_CCOEFF_NORMED )
                 threshold = tresh  # sto je veci broj to je slabiji uslov (0.65 je radio posao dobro valjda)
                 loc = np.where( res >= threshold)
 
